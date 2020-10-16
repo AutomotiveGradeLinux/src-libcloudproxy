@@ -15,6 +15,7 @@
  */
 
 #include "TelemetryWorker.h"
+#include "mainwindow.h"
 #include <QDebug>
 #include <nlohmann/json.hpp>
 #include <time.h>
@@ -23,6 +24,8 @@
 #include <libcloudproxy.h>
 
 /*
+Used coordinates:
+
 left up: 56.327  43.981
 right up:  56.327  44.03
 right bottom:  56.3  44.03
@@ -33,9 +36,6 @@ top: 56.329702 44.021352
 
 diff -0.008028   -0.014969
 coeff lon/lat = 1,8646
-
-
-https://gps-coordinates.org/distance-between-coordinates.php
 */
 
 
@@ -97,6 +97,7 @@ void TelemetryWorker::send()
 
     nlohmann::json jmsg{
         {"tele_ver", "1.0"},
+        {"client_id", "009a82af-a9f8-4dd9-b67b-558f1267958e"},
         {"lat", lat},
         {"lon", lon},
         {"alt", (size_t)(alt + drand(0, 10))},
@@ -105,12 +106,18 @@ void TelemetryWorker::send()
     };
 
     {
-        //WARN: remove
         const auto& msg{jmsg.dump()};
         qDebug() << "TelemetryWorker: " << msg.c_str();
     }
 
     if (cloudproxyclient)
-        qDebug() << "TelemetryWorker: cloud sendMessage result: " << cloudproxyclient->sendMessage(jmsg.dump());
+    {
+        int res = cloudproxyclient->sendMessage(CloudType::Azure, jmsg.dump());
+        qDebug() << "TelemetryWorker: cloud sendMessage result: " << res;
+
+        MainWindow* window = qobject_cast<MainWindow*>(parent());
+        if (window)
+            window->updateSendStatus(res == 0);
+    }
 
 }

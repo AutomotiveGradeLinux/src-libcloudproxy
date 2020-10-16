@@ -39,6 +39,7 @@ public:
 
 public slots:
     void updateState(QVariant recvMsg);
+    void updateSendStatus(bool status);
 
 private slots:
     void startMsgButtonClick();

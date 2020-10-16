@@ -37,8 +37,8 @@ private:
     CloudProxyClient* cloudproxyclient{nullptr};
 
     int direction{0};
-    const double init_lat{56.306};
-    const double init_lon{44.070};
+    const double init_lat{56.321674};
+    const double init_lon{44.006383};
     double lat{init_lat};
     double lon{init_lon};
     double alt{300.0};

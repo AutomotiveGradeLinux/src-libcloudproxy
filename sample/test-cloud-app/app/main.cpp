@@ -72,14 +72,23 @@ int main(int argc, char *argv[])
                     str = "<empty>";
                 qDebug("Event_SendMessageConfirmation: %s", str);
 
-                json_object *j_result;
-                if(!json_object_object_get_ex(object, "result", &j_result))
+                json_object *j_obj;
+
+                const char* cloud_type{nullptr};
+                if(!json_object_object_get_ex(object, "cloud_type", &j_obj) ||
+                   (cloud_type = json_object_get_string(j_obj)) == nullptr)
+                {
+                    qDebug("Can't read cloud_type");
+                    return;
+                }
+
+                if(!json_object_object_get_ex(object, "result", &j_obj))
                 {
                     qDebug("Can't read confirmation result");
                     return;
                 }
 
-                int result = (int)json_object_get_boolean(j_result);
+                int result = (int)json_object_get_boolean(j_obj);
 
                 if (result)
                     ++i_confirm_good;
@@ -87,15 +96,25 @@ int main(int argc, char *argv[])
                     ++i_confirm_bad;
 
                 window->updateStat(i_confirm_good, i_confirm_bad, i_recv, QVariant());
-                qDebug("Application received confirmation result [good: %d, bad: %d]: %d", i_confirm_good, i_confirm_bad, result);
+                qDebug("Application received confirmation result from %s [good: %d, bad: %d]: %d", cloud_type, i_confirm_good, i_confirm_bad, result);
             });
+
         g_cloudproxyclient->set_event_handler(CloudProxyClient::Event_ReceivedMessage, [&window](json_object* object){
                 qDebug("CloudProxyClient::Event_ReceivedMessage: object ptr %p", object);
 
                 const char* str = object ? json_object_to_json_string_ext(object, JSON_C_TO_STRING_SPACED | JSON_C_TO_STRING_PRETTY) : "<obj_null>";
                 if (!str)
                     str = "<empty>";
-                qDebug("Event_SendMessageConfirmation: %s", str);
+                qDebug("Event_ReceivedMessage: %s", str);
+
+                json_object *j_obj;
+                const char* cloud_type{nullptr};
+                if(!json_object_object_get_ex(object, "cloud_type", &j_obj) ||
+                   (cloud_type = json_object_get_string(j_obj)) == nullptr)
+                {
+                    qDebug("Can't read cloud_type");
+                    return;
+                }
 
                 json_object *event_data;
                 const char* data_str{nullptr};
@@ -108,7 +127,7 @@ int main(int argc, char *argv[])
 
                 ++i_recv;
                 window->updateStat(i_confirm_good, i_confirm_bad, i_recv, QString(data_str));
-                qDebug("Application received data [count: %d,  good: %d, bad %d]: %s", i_recv, i_confirm_good, i_confirm_bad, data_str);
+                qDebug("Application received data from %s [count: %d,  good: %d, bad %d]: %s", cloud_type, i_recv, i_confirm_good, i_confirm_bad, data_str);
             });
 
 

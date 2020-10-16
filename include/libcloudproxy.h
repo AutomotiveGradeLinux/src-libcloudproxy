@@ -19,6 +19,7 @@
 #include <vector>
 #include <map>
 #include <string>
+#include <mutex>
 #include <functional>
 #include <json-c/json.h>
 #include <systemd/sd-event.h>
@@ -28,6 +29,15 @@ extern "C"
 #include <afb/afb-wsj1.h>
 #include <afb/afb-ws-client.h>
 }
+
+
+struct CloudType
+{
+    static constexpr const char* Azure{"azure"};
+    static constexpr const char* Aws  {"aws"};
+
+    static bool isSupported(const char* type);
+};
 
 class CloudProxyClient
 {
@@ -41,7 +51,6 @@ public:
         Event_Max
     };
 
-
     CloudProxyClient();
     ~CloudProxyClient();
 
@@ -50,7 +59,8 @@ public:
 
     int init(const int port, const std::string& token);
 
-    int sendMessage(const std::string& data);
+    // sendMessage call is synchronous (will wait a cloudproxy reply):
+    int sendMessage(const std::string& cloud_type, const std::string& data);
 
     void set_event_handler(enum EventType et, handler_func f);
 
@@ -60,13 +70,14 @@ public:
     int unsubscribe(const std::string& event_name);
 
 private:
-    int call(const std::string& verb, struct json_object* arg);
+    int call_sync(const std::string& verb, struct json_object* arg);
 
 private:
     static const std::vector<std::string> m_api_list;
     static const std::vector<std::string> m_event_list;
 
-    std::map<EventType, handler_func> handlers;
+    std::mutex m_mutex; // used by call_sync only
+    std::map<EventType, handler_func> m_handlers;
     struct afb_wsj1_itf m_itf;
     struct afb_wsj1* m_websock{nullptr};
     sd_event* m_loop{nullptr};

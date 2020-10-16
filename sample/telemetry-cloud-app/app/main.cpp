@@ -31,7 +31,7 @@ CloudProxyClient* g_cloudproxyclient{nullptr};
 
 int main(int argc, char *argv[])
 {
-    QString graphic_role = QString("telemetrycloud");
+    QString graphic_role{"telemetrycloud"};
 
     QApplication app(argc, argv);
     app.setDesktopFileName(graphic_role);
@@ -64,13 +64,44 @@ int main(int argc, char *argv[])
         g_cloudproxyclient = new CloudProxyClient();
         g_cloudproxyclient->init(port, token.c_str());
 
+        g_cloudproxyclient->set_event_handler(CloudProxyClient::Event_SendMessageConfirmation, [&window](json_object* object){
+                qDebug("CloudProxyClient::Event_SendMessageConfirmation: object ptr %p", object);
+
+                const char* str = object ? json_object_to_json_string_ext(object, JSON_C_TO_STRING_SPACED | JSON_C_TO_STRING_PRETTY) : "<obj_null>";
+                if (!str)
+                    str = "<empty>";
+                qDebug("Event_SendMessageConfirmation: %s", str);
+
+                json_object *j_obj;
+
+                const char* cloud_type{nullptr};
+                if(!json_object_object_get_ex(object, "cloud_type", &j_obj) ||
+                   (cloud_type = json_object_get_string(j_obj)) == nullptr)
+                {
+                    qDebug("Can't read cloud_type");
+                    return;
+                }
+
+                if(!json_object_object_get_ex(object, "result", &j_obj))
+                {
+                    qDebug("Can't read confirmation result");
+                    return;
+                }
+
+                bool result = (bool)json_object_get_boolean(j_obj);
+                if (!result)
+                    window->updateSendStatus(false);
+
+                qDebug("Application received confirmation result from %s : %s", cloud_type, (result ? "true" : "false"));
+        });
+
         g_cloudproxyclient->set_event_handler(CloudProxyClient::Event_ReceivedMessage, [&window](json_object* object){
                 qDebug("CloudProxyClient::Event_ReceivedMessage: object ptr %p", object);
 
                 const char* str = object ? json_object_to_json_string_ext(object, JSON_C_TO_STRING_SPACED | JSON_C_TO_STRING_PRETTY) : "<obj_null>";
                 if (!str)
                     str = "<empty>";
-                qDebug("Event_SendMessageConfirmation: %s", str);
+                qDebug("Event_ReceivedMessage: %s", str);
 
                 json_object *event_data;
                 const char* data_str{nullptr};

@@ -58,7 +58,6 @@ void MainWindow::updateStat()
     str.append("\n\nLast received message:\n");
     str.append(lastReceivedMsg);
     ui->statLabel->setText(str);
-    //QApplication::processEvents();
 }
 
 void MainWindow::sendMsgButtonClick()
@@ -66,7 +65,8 @@ void MainWindow::sendMsgButtonClick()
     qDebug() << "MainWindow::sendMegButtonClick()";
 
     std::string msg = std::string{"{\"app_key\": \"app_value_"} + std::to_string(sendCount + sendErrorCount) + "\"}";
-    int res = g_cloudproxyclient->sendMessage(msg);
+    static int i{0};
+    int res = g_cloudproxyclient->sendMessage((++i%2 ? CloudType::Azure : CloudType::Aws), msg);
     if (res == 0)
         ++sendCount;
     else

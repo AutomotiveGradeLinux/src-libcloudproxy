@@ -36,7 +36,7 @@ CloudProxy client hides the communication with CloudProxy server. It incupsulate
 * Include the appropriate header to appliciation
 
  ```
- #include "cloudproxy-client/cloudproxyclient.h"
+ #include "libcloudproxy.h"
   ```
 
 * Initialization of the CloudProxy client inside the application:
@@ -57,36 +57,53 @@ g_cloudproxyclient->init(port, token.c_str());
 
 
 ```
-g_cloudproxyclient->set_event_handler(CloudProxyClient::Event_SendMessageConfirmation, [](json_object* object){
-                                json_object *j_result;
-                                if(!json_object_object_get_ex(object, "result", &j_result))
-                                {
-                                        qDebug("Can't read confirmation result");
-                                        return;
-                                }
+	g_cloudproxyclient->set_event_handler(CloudProxyClient::Event_SendMessageConfirmation, [](json_object* object){
+		json_object *j_obj;
+		const char* cloud_type{nullptr};
+		if(!json_object_object_get_ex(object, "cloud_type", &j_obj) ||
+		   (cloud_type = json_object_get_string(j_obj)) == nullptr)
+		{
+			qDebug("Can't read cloud_type");
+			return;
+		}
 
-                                qDebug("Confirmation result %d", (int)json_object_get_boolean(j_result));
-        });
+		if(!json_object_object_get_ex(object, "result", &j_obj))
+		{
+			qDebug("Can't read confirmation result");
+			return;
+		}
+
+		qDebug("Confirmation result from %s: %d", cloud_type, (int)json_object_get_boolean(j_obj));
+	});
 
    ```
 
 
 
-* Subsription to the Event_SendMessageConfirmation
+* Subsription to the Event_ReceivedMessage
 
 ```
 g_cloudproxyclient->set_event_handler(CloudProxyClient::Event_ReceivedMessage, [](json_object* object)
-                                json_object *event_data;
-                                const char* data_str{nullptr};
-                                if(!json_object_object_get_ex(object, "data", &event_data) ||
-                                    data_str = json_object_get_string(event_data)) == nullptr)
-                                {
-                                        qDebug("Can't read event data");
-                                        return;
-                                }
+			json_object *j_obj;
+			const char* cloud_type{nullptr};
+			if(!json_object_object_get_ex(object, "cloud_type", &j_obj) ||
+			   (cloud_type = json_object_get_string(j_obj)) == nullptr)
+			{
+				qDebug("Can't read cloud_type");
+				return;
+			}
 
-                                qDebug("Received data: %s", data_str);
-        });
+			json_object *event_data;
+			const char* data_str{nullptr};
+			if(!json_object_object_get_ex(object, "data", &event_data) ||
+			   (data_str = json_object_get_string(event_data)) == nullptr)
+			{
+				qDebug("Can't read event data");
+				return;
+			}
+
+			qDebug("Received data from %s: %s", cloud_type, data_str);
+	});
    ```
 
 
@@ -94,5 +111,6 @@ g_cloudproxyclient->set_event_handler(CloudProxyClient::Event_ReceivedMessage, [
 
 
 ```
-qDebug() << "sendMessage result: " << g_cloudproxyclient->sendMessage("{\"app_key\": \"app_value1111\"}");
+qDebug() << "sendMessage to Azure: result: " << g_cloudproxyclient->sendMessage(CloudType::Azure, "{\"app_key\": \"app_value1111\"}");
+qDebug() << "sendMessage to AWS: result: " << g_cloudproxyclient->sendMessage(CloudType::Aws, "{\"app_key\": \"app_value1111\"}");
 ```

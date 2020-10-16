@@ -36,6 +36,7 @@ class Ui_MainWindow
 public:
     QWidget *centralWidget{nullptr};
     QPushButton *startMsgButton{nullptr};
+    QLabel *sendStatusLabel{nullptr};
     QLabel *stateLabel{nullptr};
 
     void setupUi(double scale_factor, QMainWindow *MainWindow)
@@ -54,9 +55,16 @@ public:
         startMsgButton->setGeometry(QRect((540-242/2)*scale_factor, 20*scale_factor, 242*scale_factor, 64*scale_factor));
         startMsgButton->setStyleSheet(style);
 
-		stateLabel = new QLabel(centralWidget);
-        stateLabel->setObjectName(QString::fromUtf8("label"));
-        stateLabel->setGeometry(QRect(40*scale_factor, 180*scale_factor, 1000*scale_factor, 420*scale_factor));
+        sendStatusLabel = new QLabel(centralWidget);
+        sendStatusLabel->setObjectName(QString::fromUtf8("sendStatusLabel"));
+        sendStatusLabel->setGeometry(QRect(40*scale_factor, 180*scale_factor, 1000*scale_factor, 80*scale_factor));
+        sendStatusLabel->setWordWrap(false);
+        sendStatusLabel->setAlignment(Qt::AlignTop);
+        sendStatusLabel->setStyleSheet(style);
+
+        stateLabel = new QLabel(centralWidget);
+        stateLabel->setObjectName(QString::fromUtf8("stateLabel"));
+        stateLabel->setGeometry(QRect(40*scale_factor, 280*scale_factor, 1000*scale_factor, 420*scale_factor));
         stateLabel->setWordWrap(true);
         stateLabel->setAlignment(Qt::AlignTop);
         stateLabel->setStyleSheet(style);
@@ -74,6 +82,8 @@ public:
     {
         MainWindow->setWindowTitle(QApplication::translate("MainWindow", "MainWindow", nullptr));
         startMsgButton->setText(QApplication::translate("MainWindow", "Start", nullptr));
+        sendStatusLabel->setText(QApplication::translate("MainWindow", "Connection status: None", nullptr));
+        stateLabel->setText(QApplication::translate("MainWindow", "Cloud message:", nullptr));
     } // retranslateUi
 };
 

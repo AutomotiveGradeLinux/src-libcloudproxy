@@ -64,8 +64,20 @@ void MainWindow::updateState(QVariant recvMsg)
         qDebug() << "Can't parse incomming message: " << ex.what();
     }
 
-    QString str = QString::asprintf("Cloud info: %s", cloud_msg.c_str());
+    QString str = QString::asprintf("Cloud message: %s", cloud_msg.c_str());
     ui->stateLabel->setText(str);
+}
+
+void MainWindow::updateSendStatus(bool status)
+{
+    static bool init{false}, prev{false};
+    if (!init || prev != status)
+    {
+        init = true;
+        prev = status;
+        QString str = QString::asprintf("Connection status: %s", (status ? "OK" : "ERROR"));
+        ui->sendStatusLabel->setText(str);
+    }
 }
 
 void MainWindow::startMsgButtonClick()
